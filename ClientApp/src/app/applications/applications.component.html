@@ -1,0 +1,43 @@
+<form>
+  <div class="form-group form-inline">
+    Full text search: <input class="form-control ml-2 mr-2" type="text" [formControl]="filter" />
+    <small *ngIf="searching" class="form-text text-muted">searching...</small>
+  </div>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">App Id</th>
+      <th scope="col">Display Name</th>
+      <th scope="col">Service Principals</th>
+      <th scope="col">Owners</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let application of applications$ | async; index as i">
+      <td>
+        {{application.appId}}
+      </td>
+      <td>
+        <ngb-highlight [result]="application.displayName" [term]="filter.value"></ngb-highlight>
+      </td>
+      <td>
+        <ul>
+          <li *ngFor="let spId of application.servicePrincipalsIds">
+            {{spId}}
+          </li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li *ngFor="let ownerName of application.ownersNames">
+            {{ownerName}}
+          </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+Total records: {{total$|async}}
