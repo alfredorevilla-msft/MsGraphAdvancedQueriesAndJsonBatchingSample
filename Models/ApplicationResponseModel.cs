@@ -14,10 +14,5 @@ namespace MsGraphAdvancedQueriesAndJsonBatchingSample.Models
         public long Total { get; }
 
         public IEnumerable<ApplicationModel> List { get; }
-
-        public IEnumerator<ApplicationModel> GetEnumerator()
-        {
-            return List.GetEnumerator();
-        }
     }
 }

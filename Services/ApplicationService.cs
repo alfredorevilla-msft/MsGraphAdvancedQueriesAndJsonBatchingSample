@@ -47,6 +47,8 @@ namespace Services
                 .Top(5)
                 .GetAsync();
 
+            logger.LogDebug("Building batch request");
+
             var batchRequestContent = new BatchRequestContent();
 
             var servicePrincipalsRequestId = batchRequestContent.AddBatchRequestStep(
@@ -62,26 +64,36 @@ namespace Services
                 })
                 .ToDictionary(a => a.AppId, a => a.Id);
 
+            logger.LogInformation("Sending Graph batch request");
+
             var returnedResponse = await client.Batch.Request().PostAsync(batchRequestContent);
 
             var servicePrincipalsPage = await returnedResponse.GetResponseByIdAsync<GraphServiceServicePrincipalsCollectionResponse>(servicePrincipalsRequestId);
 
+            logger.LogDebug("Building response model");
+
             List<ApplicationModel> list = new List<ApplicationModel>();
             foreach (var item in applicationPage)
             {
+                logger.LogDebug("Selecting owners for app id {0}", item.AppId);
+
                 var owners = (await returnedResponse.GetResponseByIdAsync<ApplicationOwnersCollectionWithReferencesResponse>(ownerRequestIds[item.AppId])).Value;
 
                 var servicePrincipals = servicePrincipalsPage.Value
                     .Where(p => p.AppId == item.AppId);
+
+                logger.LogDebug("Selecting service principals for app id {0}", item.AppId);
 
                 list.Add(new ApplicationModel
                 {
                     AppId = item.AppId,
                     DisplayName = item.DisplayName,
                     ServicePrincipalsIds = servicePrincipals.Select(p => p.Id).ToArray(),
-                    OwnersNames = owners.Cast<dynamic>().Select(d => (string)d.DisplayName).ToArray()
+                    OwnersNames = owners.OfType<User>().Select(d => d.DisplayName).ToArray()
                 });
             }
+
+            logger.LogInformation("Returning application response model");
 
             return new ApplicationResponseModel(list, (long)applicationPage.AdditionalData["@odata.count"]);
         }
